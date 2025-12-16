@@ -1,0 +1,7 @@
+app_name=test_app
+sandbox_uid=1000
+sandbox_gid=1000
+memory_limit=104857600
+cpu_limit=60
+network_access=0
+filesystem_access=1

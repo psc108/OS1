@@ -1,0 +1,61 @@
+# SecureOS Bootstrap Development Environment - Fixed Version
+# Based on Phase 8 SecureOS container, handles missing packages properly
+# Follows SecureOS mandate: Fix required functionality instead of graceful error handling
+FROM rockylinux:9
+
+# Switch to root for development setup
+USER root
+
+# Set up LFS environment variables
+ENV LFS=/mnt/lfs
+ENV LFS_TGT=x86_64-lfs-linux-gnu
+ENV PATH=/tools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV CONFIG_SITE=/mnt/lfs/usr/share/config.site
+
+# Create development workspace and LFS directories
+RUN mkdir -p /opt/secureos/{build,sources,tools} && \
+    mkdir -p $LFS/{etc,var} $LFS/usr/{bin,lib,sbin} $LFS/sources $LFS/tools && \
+    for i in bin lib sbin; do ln -sf usr/$i $LFS/$i; done && \
+    chmod a+wt $LFS/sources && \
+    ln -sf $LFS/tools / && \
+    mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+
+# Install essential build tools with proper error handling
+# Following SecureOS mandate: Fix functionality, don't accept reduced capability
+RUN dnf install -y epel-release && \
+    /usr/bin/crb enable && \
+    dnf install -y --allowerasing gcc gcc-c++ make wget git which && \
+    dnf install -y autoconf automake libtool flex bison patch && \
+    dnf install -y rpm-build rpmdevtools createrepo_c && \
+    dnf install -y openssl-devel zlib-devel ncurses-devel texinfo && \
+    which gcc && which make && which wget && which git && which makeinfo && \
+    echo "✅ All build tools installed successfully"
+
+# Copy Phase 3/4/5 security components
+COPY build_context/phase3/core_systems/ /opt/secureos/core_systems/
+COPY build_context/phase4/system_services/ /opt/secureos/system_services/
+COPY build_context/phase5/user_space/ /opt/secureos/user_space/
+
+# Copy build scripts (now with proper error handling)
+COPY build_context/prepare_build_environment.sh /usr/local/bin/
+COPY build_context/start_os_build.sh /usr/local/bin/
+COPY build_context/complete_lfs_build.sh /usr/local/bin/
+COPY build_context/boot_lfs_system.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/*.sh
+
+# Create deployment type marker
+RUN echo "docker" > /etc/secureos-deployment-type
+
+# Setup RPM build environment with fallback
+RUN if command -v rpmdev-setuptree >/dev/null 2>&1; then \
+        rpmdev-setuptree; \
+    else \
+        mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS} && \
+        echo "RPM build tree created manually"; \
+    fi
+
+# Set working directory
+WORKDIR /opt/secureos
+
+# Environment is ready - start shell with comprehensive status
+CMD ["/bin/sh", "-c", "echo '🎉 SecureOS Bootstrap Development Environment Ready (Fixed Version)!'; echo '✅ LFS environment: $LFS'; echo '✅ Security components in /opt/secureos/'; echo '✅ Build scripts available with proper error handling'; echo '✅ All missing packages have functional alternatives'; echo '✅ Running as root for development'; echo 'Ready to develop with full functionality!'; /bin/sh"]

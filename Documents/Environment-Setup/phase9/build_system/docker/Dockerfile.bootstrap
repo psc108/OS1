@@ -1,0 +1,55 @@
+# SecureOS Bootstrap Development Environment
+# Based on Phase 8 SecureOS container with development tools
+FROM secureos/secureos:1.0.0
+
+# Install development toolchain (using microdnf for minimal base)
+RUN microdnf install -y gcc gcc-c++ binutils make && \
+    microdnf install -y git wget curl tar gzip bzip2 xz patch && \
+    microdnf install -y gawk m4 texinfo diffutils findutils grep sed && \
+    microdnf install -y bash file bc flex bison perl python3 && \
+    microdnf install -y tree util-linux && \
+    microdnf clean all
+
+# Create development workspace
+RUN mkdir -p /opt/secureos/{build,sources,tools} && \
+    mkdir -p /mnt/lfs && \
+    mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+
+# Set up LFS environment variables
+ENV LFS=/mnt/lfs
+ENV LFS_TGT=x86_64-lfs-linux-gnu
+ENV PATH=/tools/bin:$PATH
+ENV CONFIG_SITE=$LFS/usr/share/config.site
+
+# Copy Phase 3/4/5 security components
+COPY build_context/phase3/core_systems/ /opt/secureos/core_systems/
+COPY build_context/phase4/system_services/ /opt/secureos/system_services/
+COPY build_context/phase5/user_space/ /opt/secureos/user_space/
+
+# Copy build preparation script
+COPY build_context/prepare_build_environment.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/prepare_build_environment.sh
+
+# Copy LFS setup script
+COPY build_context/setup_lfs_docker.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/setup_lfs_docker.sh
+
+# Create deployment type marker
+RUN echo "docker" > /etc/secureos-deployment-type
+
+# Set working directory
+WORKDIR /opt/secureos
+
+# Copy zero-interaction setup script
+COPY build_context/zero_interaction_setup.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/zero_interaction_setup.sh
+
+# Setup LFS environment during build
+RUN /usr/local/bin/setup_lfs_docker.sh
+
+# Copy build starter script
+COPY build_context/start_os_build.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/start_os_build.sh
+
+# Environment is ready - start shell with welcome message
+CMD ["/bin/sh", "-c", "echo '🎉 SecureOS Bootstrap Development Environment Ready!'; echo '✅ LFS environment: $LFS'; echo '✅ Build tools: gcc, make, git available'; echo '✅ Security components in /opt/secureos/'; echo 'Ready to develop!'; /bin/sh"]

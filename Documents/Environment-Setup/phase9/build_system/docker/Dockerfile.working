@@ -1,0 +1,39 @@
+# SecureOS Bootstrap Development Environment - Working Version
+# Based on Phase 8 SecureOS container, runs as root for development
+FROM secureos/secureos:1.0.0
+
+# Switch to root for development setup
+USER root
+
+# Set up LFS environment variables
+ENV LFS=/mnt/lfs
+ENV LFS_TGT=x86_64-lfs-linux-gnu
+ENV PATH=/tools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV CONFIG_SITE=/mnt/lfs/usr/share/config.site
+
+# Create development workspace and LFS directories
+RUN mkdir -p /opt/secureos/{build,sources,tools} && \
+    mkdir -p $LFS/{etc,var} $LFS/usr/{bin,lib,sbin} $LFS/sources $LFS/tools && \
+    for i in bin lib sbin; do ln -sf usr/$i $LFS/$i; done && \
+    chmod a+wt $LFS/sources && \
+    ln -sf $LFS/tools / && \
+    mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+
+# Copy Phase 3/4/5 security components
+COPY build_context/phase3/core_systems/ /opt/secureos/core_systems/
+COPY build_context/phase4/system_services/ /opt/secureos/system_services/
+COPY build_context/phase5/user_space/ /opt/secureos/user_space/
+
+# Copy build scripts
+COPY build_context/prepare_build_environment.sh /usr/local/bin/
+COPY build_context/start_os_build.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/*.sh
+
+# Create deployment type marker
+RUN echo "docker" > /etc/secureos-deployment-type
+
+# Set working directory
+WORKDIR /opt/secureos
+
+# Environment is ready - start shell with welcome message
+CMD ["/bin/sh", "-c", "echo '🎉 SecureOS Bootstrap Development Environment Ready!'; echo '✅ LFS environment: $LFS'; echo '✅ Security components in /opt/secureos/'; echo '✅ Build scripts available'; echo '✅ Running as root for development'; echo 'Ready to develop!'; /bin/sh"]
