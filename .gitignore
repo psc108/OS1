@@ -1,0 +1,99 @@
+# Large files and build artifacts
+*.iso
+*.vmdk
+*.img
+*.qcow2
+*.tar.gz
+*.tar.xz
+*.zip
+*.raw
+
+# Build output directories
+build_output/
+vmdk_build/
+iso_build/
+docker_build/
+
+# Docker images and containers
+*.tar
+docker-image-*.tar
+
+# Build directories and temporary files
+/tmp/
+build/
+*.tmp
+*.log
+*_build_*
+*_validation_*
+
+# LFS build artifacts
+/mnt/lfs/
+lfs-system*
+secureos-lfs*
+*-lfs-*
+
+# Compiled binaries
+*.o
+*.so
+*.a
+*.ko
+*.mod.c
+.tmp_versions/
+modules.order
+Module.symvers
+vmlinux*
+System.map
+.config.old
+
+# IDE files
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Security sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+.env
+config/private/
+*.crt
+*.csr
+
+# Package manager files
+node_modules/
+*.rpm
+*.deb
+*.pkg
+
+# Large source archives
+*.tar.bz2
+binutils-*.tar.*
+gcc-*.tar.*
+glibc-*.tar.*
+linux-*.tar.*
+*.src.rpm
+
+# Build logs and reports
+security_analysis_*
+performance_*
+build_system_validation_*
+lfs_build_*
+lfs_boot_*
+threat_analysis_report.txt
+
+# Permission-denied directories
+Documents/Environment-Setup/phase1/security/policies/selinux/.gitignore
+Documents/Environment-Setup/common/logs/phase9/
+Documents/Environment-Setup/common/logs/threat_analysis_report.txt
